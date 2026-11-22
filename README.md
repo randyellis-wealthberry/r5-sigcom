@@ -8,7 +8,7 @@
 
 `CLASSIFICATION: UNCLASSIFIED // FICTIONAL` · `DIRECTIVE R5-DIR 5-05 REV C` · `COMPARTMENT RIGLINE / HERDSMAN`
 
-![R5-SIGCOM preview](docs/preview.png)
+![R5-SIGCOM preview](preview.png)
 
 </div>
 
@@ -109,6 +109,8 @@ The panel follows the focused agent, or stays pinned to the one you opened.
 **Right-click a folder in Files:** start any installed agent in that folder (new tab or split), or reveal it in Finder.
 
 ## Install
+
+Agents can build it from scratch with [RECIPE.md](RECIPE.md).
 
 Requires the [Herdr](https://github.com/jerryfane/herdr) desktop app.
 
