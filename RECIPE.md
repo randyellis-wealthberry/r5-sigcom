@@ -21,9 +21,10 @@ Left to right, top to bottom:
     - Below 1150px window height it shrinks to a compact seal.
   - **Identity block:** R5-SIGCOM / HERD OPERATIONS / RIG5IVE SIGNALS COMMAND / UPLINK T+mm:ss / STN R5-01 · SECTOR 5 / OPS · two codenames.
   - **Routing card:** DIRECTIVE R5-DIR 5-05 REV C, COMPARTMENT RIGLINE / HERDSMAN, CASE NO. 5V-YYMM-NNNN, POSTURE, AUTH CHAIN CMDR-5 › OP-DESK.
-  - **Radar** (≈120px scope):
-    - A rotating sweep wedge, with one dot per agent in its status color.
-    - Beside it: SWEEP, CONTACTS, BLOCKED, INTEL (n FILES, counted from git changes).
+  - **Radar · Global coverage** (two 128px squares side by side, 116px when compact):
+    - Left: a scope with a rotating sweep wedge and one dot per agent in its status color.
+    - Right: a wireframe globe drawn as 6px dot-matrix text inside a thin ring (`globe-ring.svg`). Lines every 30° of longitude and latitude, tilted 23°. Far side `·` in `#1E4A2E`, near side `•` in `#46D97A`, equator `•` in `#E3C76A`.
+    - Under both, one row of four stats: SWEEP, CONTACTS, BLOCKED, INTEL (n FILES, counted from git changes).
   - **Assets on station:**
     - One row per agent: R5-0n, STATUS, UNIT (agent name), and a block-character activity meter under it.
     - A blocked row gets a red tinted background.
@@ -96,6 +97,7 @@ Left to right, top to bottom:
 - **Right-click a tab:** a menu with Split right, Split down, New agent in split (each installed agent), Rename, Close and More….
 - **Right-click a folder** (or the Files header): Start agent here (each installed agent; new tab, split right or split down), and Reveal in Finder.
 - **OPEN BROWSER:** if `terminal-browser` is on PATH, it opens in a right split. Otherwise a toast explains how to install it.
+- **Globe:** spins continuously; 110ms a frame when active, 45ms during boot, 400ms when dormant (dimmed). The near side turns red while any agent is blocked.
 - **Treasury:** balances drift and return to base, and the transaction log scrolls.
 - **GDP ticker:** cycles USA, CHN, DEU, JPN, IND, GBR, FRA… with ▲/▼ growth figures.
 
@@ -124,6 +126,7 @@ Left to right, top to bottom:
 - **Animation:**
   - Everything moving uses native `.frames(list, ms)`, `.loop(prop, …)` or svg `.spin(ms)`. This includes the ticker (140ms), spectrum (110–120ms), meters, treasury, boot text and hex.
   - Frames are precomputed on timers, never in `render`.
+  - The globe is 3 layers (far, near, equator) × one div per row, each `.frames(rows, ms)` over 15 precomputed frames. The grid repeats every 30°, so 15 frames of 2° loop seamlessly. All layers share the frames clock and stay in step. Cell size: 6px font, `line_height("6px")`, 3.6px wide; cols = R/3.6, rows = R/6, both odd.
   - Mesh links are drawn with `window.paint_path(PathBuilder.stroke(1).dash_array(…))`.
 - **Programs it runs:**
   - `curl` to `api.worldbank.org`: indicators NY.GDP.MKTP.CD and NY.GDP.MKTP.KD.ZG, once a day, cached in shared state. Built-in 2025 figures cover being offline.
@@ -131,7 +134,7 @@ Left to right, top to bottom:
   - `<shell> -lc "command -v terminal-browser"`.
   - `open -R` (Reveal in Finder).
   - `r5-files` also runs `sh`/`git` to list folders, like the shipped mod.
-- **Art in `mods/r5-sigcom/`:** `seal-rings.svg`, `ticks.svg`, `seal-core.svg`, `mark.svg`, `radar-grid.svg`, `radar-sweep.svg`. Spin the sweep and the outer ring.
+- **Art in `mods/r5-sigcom/`:** `seal-rings.svg`, `ticks.svg`, `seal-core.svg`, `globe-ring.svg`, `mark.svg`, `radar-grid.svg`, `radar-sweep.svg`. Spin the sweep and the outer ring.
 
 ## Watch out
 
@@ -159,5 +162,6 @@ Left to right, top to bottom:
 - Intercept lines appear for a busy background agent with secrets shown as █. Clicking INTERCEPT shows PAUSED.
 - The tab-bar Dossier button opens the right panel, and GO TO TERMINAL focuses that agent.
 - Right-clicking a tab and choosing Split right opens a split. Right-clicking a folder and starting an agent opens it in that folder.
+- The radar's globe spins, faster during boot, and its near side turns red when an agent is blocked.
 - The ticker scrolls GDP figures and the treasury balances tick.
 - `herdr-app check` passes for `r5-sigcom`, `r5-tabs` and `r5-files`.

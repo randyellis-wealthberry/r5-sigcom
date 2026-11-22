@@ -14,7 +14,7 @@ import {
 
 const ART = "mods/r5-sigcom/";
 const MONO = "JetBrains Mono";
-const BUILD = "5.1.9";
+const BUILD = "5.2.0";
 const STATE = "r5.state";
 const LOG = "r5.log";
 
@@ -242,6 +242,37 @@ function meterFrames(status, rows, seed) {
     const floor = (rows - 1 - r) * 8;
     return lv.map((v) => { const l = Math.max(0, Math.min(8, v - floor)); return l === 0 ? "  " : SPARK[l - 1].repeat(2); });
   });
+}
+
+// A wireframe globe as dot-matrix text: one string per row per frame, in three
+// layers (far side, near side, equator) that share the frames clock and stay in
+// step. Lines every 30° of longitude and latitude, tilted 23° toward the viewer.
+const GLOBE_N = 15; // frames per 30° step; the grid repeats every 30°, so this loops seamlessly
+function globeFrames(cols, rows) {
+  const layers = [0, 1, 2].map(() => Array.from({ length: rows }, () => []));
+  const tilt = (23 * Math.PI) / 180, ct = Math.cos(tilt), st = Math.sin(tilt);
+  const rx = (cols - 1) / 2, ry = (rows - 1) / 2;
+  for (let f = 0; f < GLOBE_N; f++) {
+    const rot = (f / GLOBE_N) * (Math.PI / 6);
+    const g = [0, 1, 2].map(() => Array.from({ length: rows }, () => Array(cols).fill(" ")));
+    const plot = (lat, lon, eq) => {
+      const l = lon + rot;
+      const x = Math.cos(lat) * Math.sin(l), y = Math.sin(lat), z = Math.cos(lat) * Math.cos(l);
+      const y2 = y * ct - z * st, z2 = y * st + z * ct;
+      const c = Math.round(rx + x * rx), r = Math.round(ry - y2 * ry);
+      if (r < 0 || r >= rows || c < 0 || c >= cols) return;
+      if (z2 >= 0) { g[eq ? 2 : 1][r][c] = "•"; g[0][r][c] = " "; }
+      else if (g[1][r][c] === " " && g[2][r][c] === " ") g[0][r][c] = "·";
+    };
+    const D = Math.PI / 180;
+    for (let m = 0; m < 360; m += 30) for (let a = -72; a <= 72; a += 2) plot(a * D, m * D, false);
+    for (const p of [-60, -30, 30, 60]) for (let a = 0; a < 360; a += 2) plot(p * D, a * D, false);
+    for (let a = 0; a < 360; a += 1.5) plot(0, a * D, true);
+    // a near-side cell beats the far side drawn earlier in the same cell
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) if (g[1][r][c] !== " " || g[2][r][c] !== " ") g[0][r][c] = " ";
+    for (let k = 0; k < 3; k++) for (let r = 0; r < rows; r++) layers[k][r].push(g[k][r].join(""));
+  }
+  return layers;
 }
 
 function sparkFrames(seed, len) {
@@ -788,7 +819,7 @@ export default class R5Sigcom extends View {
       .child(div().flex_1().truncate().text_color(dormant ? C.goldDim : C.gold2).child(v))));
 
     const visible = dormant || (boot && ph < 5) ? [] : list;
-    const R = compact ? 116 : 140;
+    const R = Math.max(96, Math.min(compact ? 116 : 128, Math.floor((this.size.width - 28 - 12) / 2)));
     const radar = div().relative().w(R).h(R).flex_shrink_0()
       .child(svg(ART + "radar-grid.svg").absolute().left(0).top(0).w(R).h(R).text_color(dormant ? C.ghost : C.rule))
       .child(svg(ART + "radar-sweep.svg").absolute().left(0).top(0).w(R).h(R)
@@ -804,17 +835,26 @@ export default class R5Sigcom extends View {
           .bg(STATUS_COLOR[a.status] || C.olive)
           .loop("opacity", a.status === "blocked" ? { from: 0.25, to: 1, period: 500 } : { from: 0.35, to: 1, period: 4000 });
       }));
-    const sweepLabel = v_flex().gap(2).text_size(10)
-      .child(div().text_color(C.dim).child("SWEEP"))
-      .child(div().text_color(dormant ? C.faint : C.text).child(dormant ? "LOW" : boot ? "FAST" : "NOMINAL"))
-      .child(div().mt(6).text_color(C.dim).child("CONTACTS"))
-      .child(div().text_color(dormant ? C.faint : C.text).child(String(visible.length)))
-      .child(div().mt(6).text_color(C.dim).child("BLOCKED"))
-      .child(div().text_color(visible.some((a) => a.status === "blocked") ? C.red : dormant ? C.faint : C.text)
-        .child(String(visible.filter((a) => a.status === "blocked").length)))
-      .child(div().mt(6).text_color(C.dim).child("INTEL"))
-      .child(div().text_color(dormant ? C.faint : C.gold2)
-        .child(dormant ? "\u2014" : `${Object.values(this.intelCount).reduce((n, v) => n + v, 0)} FILES`));
+    const anyBlocked = visible.some((a) => a.status === "blocked");
+    const stat = (k, v, col) => v_flex().gap(1).child(div().text_color(C.dim).child(k)).child(div().text_color(col).child(v));
+    const sweepLabel = h_flex().w_full().justify_between().text_size(10)
+      .child(stat("SWEEP", dormant ? "LOW" : boot ? "FAST" : "NOMINAL", dormant ? C.faint : C.text))
+      .child(stat("CONTACTS", String(visible.length), dormant ? C.faint : C.text))
+      .child(stat("BLOCKED", String(visible.filter((a) => a.status === "blocked").length), anyBlocked ? C.red : dormant ? C.faint : C.text))
+      .child(stat("INTEL", dormant ? "\u2014" : `${Object.values(this.intelCount).reduce((n, v) => n + v, 0)} FILES`, dormant ? C.faint : C.gold2));
+
+    // Spinning wireframe globe beside the scope. 6px mono cells: 3.6px wide, 6px tall.
+    const gCols = Math.floor(R / 3.6) | 1, gRows = Math.floor(R / 6) | 1;
+    const gKey = "globe" + gCols + "x" + gRows;
+    const gl = this.cache[gKey] || (this.cache[gKey] = globeFrames(gCols, gRows));
+    const gMs = dormant ? 400 : boot ? 45 : 110;
+    const gCol = [dormant ? C.ghost : "#1E4A2E", dormant ? C.faint : anyBlocked ? C.red : C.green, dormant ? C.goldDim : C.gold2];
+    const gPadX = Math.floor((R - gCols * 3.6) / 2), gPadY = Math.floor((R - gRows * 6) / 2);
+    const globe = div().relative().w(R).h(R).flex_shrink_0()
+      .child(svg(ART + "globe-ring.svg").absolute().left(0).top(0).w(R).h(R).text_color(dormant ? C.ghost : C.rule))
+      .children(gl.map((rowsF, k) => v_flex().absolute().left(gPadX).top(gPadY).gap(0)
+        .children(rowsF.map((fr) => div().h(6).line_height("6px").text_size(6).font_family(MONO).whitespace_nowrap()
+          .text_color(gCol[k]).frames(fr, gMs)))));
 
     const sparkLen = Math.max(8, Math.floor((this.size.width - 44) / 6.8));  // 11px mono is ~6.6px a cell
     let assets;
@@ -862,8 +902,10 @@ export default class R5Sigcom extends View {
       .child(codeRows)
       .child(browse)
       .child(v_flex().w_full()
-        .child(rule("RADAR", null))
-        .child(h_flex().w_full().gap(14).items_center().child(radar).child(sweepLabel)))
+        .child(rule("RADAR \u00b7 GLOBAL COVERAGE", null))
+        .child(h_flex().w_full().justify_between().items_center().child(radar).child(globe))
+        .child(div().h(6))
+        .child(sweepLabel))
       .child(v_flex().w_full().flex_1().min_h(0)
         .child(rule("ASSETS ON STATION", dormant ? "NONE" : `${list.length} TRACKED`))
         .child(assets))
