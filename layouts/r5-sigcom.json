@@ -1,0 +1,172 @@
+{
+  "id": "root",
+  "type": "row",
+  "theme": "r5-sigcom",
+  "font": "JetBrains Mono",
+  "font_size": 13,
+  "ui_font": "JetBrains Mono",
+  "background": "canvas",
+  "preview": "layouts/r5-sigcom.png",
+  "divider": {
+    "width": 1,
+    "color": "border"
+  },
+  "children": [
+    {
+      "id": "rail",
+      "type": "block",
+      "size": {
+        "px": 300
+      },
+      "min": 260,
+      "max": 420,
+      "content": {
+        "mod": "r5-sigcom",
+        "props": {
+          "role": "rail"
+        }
+      }
+    },
+    {
+      "id": "work",
+      "type": "column",
+      "divider": {
+        "width": 1,
+        "color": "border"
+      },
+      "children": [
+        {
+          "id": "banner",
+          "type": "block",
+          "size": {
+            "px": 28
+          },
+          "content": {
+            "mod": "r5-sigcom",
+            "props": {
+              "role": "banner"
+            }
+          }
+        },
+        {
+          "id": "ticker",
+          "type": "block",
+          "size": {
+            "px": 22
+          },
+          "content": {
+            "mod": "r5-sigcom",
+            "props": {
+              "role": "ticker"
+            }
+          }
+        },
+        {
+          "id": "tabs",
+          "type": "block",
+          "size": {
+            "px": 38
+          },
+          "content": {
+            "mod": "r5-tabs"
+          }
+        },
+        {
+          "id": "work-body",
+          "type": "row",
+          "padding": 6,
+          "gap": 6,
+          "children": [
+            {
+              "id": "main",
+              "type": "block",
+              "content": {
+                "tab": "active",
+                "pane": {
+                  "gap": 6,
+                  "radius": 4,
+                  "background": "background",
+                  "border": {
+                    "width": 1,
+                    "color": "border"
+                  },
+                  "focus": {
+                    "width": 1,
+                    "color": "accent"
+                  },
+                  "lone": true,
+                  "header": {
+                    "content": {
+                      "mod": "pane"
+                    },
+                    "height": 30,
+                    "position": "top",
+                    "reveal": "always"
+                  }
+                }
+              }
+            },
+            {
+              "id": "panel",
+              "type": "column",
+              "hidden": true,
+              "size": {
+                "px": 368
+              },
+              "min": 280,
+              "max": 900,
+              "children": [
+                {
+                  "id": "panel-body",
+                  "type": "stack",
+                  "active": "files",
+                  "children": [
+                    {
+                      "id": "files",
+                      "type": "block",
+                      "content": {
+                        "mod": "r5-files"
+                      }
+                    },
+                    {
+                      "id": "changes",
+                      "type": "block",
+                      "content": {
+                        "mod": "changes"
+                      }
+                    },
+                    {
+                      "id": "dossier",
+                      "type": "block",
+                      "content": {
+                        "mod": "r5-sigcom",
+                        "props": {
+                          "role": "dossierpanel"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "feed",
+          "type": "block",
+          "size": {
+            "px": 150
+          },
+          "min": 90,
+          "max": 320,
+          "content": {
+            "mod": "r5-sigcom",
+            "props": {
+              "role": "feed"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
