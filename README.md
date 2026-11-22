@@ -47,11 +47,7 @@ The window title and dock badge follow the OPS-CON level.
 
 **Identity block.** Agency, station designator, uplink clock (T+ since boot) and the active operation codenames, plus a faux routing card: directive, compartment, case number, posture and authorization chain.
 
-**Radar.** A sweeping scope with one contact per agent, colored by status. Under it: sweep state, contact count, blocked count and intel files collected.
-
-**Global coverage globe.** A green wireframe globe spins beside the radar, drawn as a dot matrix: near-side grid lines bright, far side dim, equator in brass. It turns red when an agent is blocked, slows to a crawl when the platform is dormant and whips around during boot.
-
-![Spinning grid globe](docs/globe.png)
+**Radar.** A sweeping scope with one contact per agent, colored by status. Beside it: sweep state, contact count, blocked count and intel files collected.
 
 **Assets on station.** Each agent gets an asset number (R5-01, R5-02, ...), its status and a live activity meter. Click an asset to open its dossier.
 
