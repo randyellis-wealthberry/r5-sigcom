@@ -126,6 +126,24 @@ cp -R r5-sigcom/layouts r5-sigcom/themes r5-sigcom/mods ~/.config/herdr-app/
 
 Best with JetBrains Mono installed.
 
+Or run the installer, which works on macOS and Linux:
+
+```sh
+git clone https://github.com/randyellis-wealthberry/r5-sigcom.git
+./r5-sigcom/install.sh
+```
+
+It never overwrites: anything already installed under the same name is moved to `<name>.bak-<time>`. It checks each mod with `herdr-app check` and switches to the layout. Your other layouts and `keys.json` are left alone.
+
+### Omarchy and other Linux
+
+Same steps; `install.sh` handles the differences:
+
+- **Font.** Omarchy ships JetBrains Mono as `JetBrainsMono Nerd Font`. If plain `JetBrains Mono` isn't installed, the installer points the layout and console at the Nerd Font. If neither is there, install it with `sudo pacman -S ttf-jetbrains-mono`.
+- **Keys.** Herdr's Linux defaults use `ctrl` where macOS uses `cmd`; the layout doesn't change any keys.
+- **Reveal in Finder** in the file menu is macOS-only and hides itself elsewhere.
+- **Needs** `curl` (GDP ticker) and `git` (change counts); `terminal-browser` is optional.
+
 ### What gets installed
 ```
 layouts/r5-sigcom.json    the floor plan
