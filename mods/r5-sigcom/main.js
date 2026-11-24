@@ -6,6 +6,7 @@
 
 import { View, div, svg, image, PathBuilder } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
+import GLOBE_FRAMES from "./globe-frames.js";
 import {
   agents, run, shared, setShared, props, checking, hc, exec, panes, spaces,
   openOverlay, closeOverlay, notify, setBadge, setWindowTitle, setAgentOrder, knownAgents,
@@ -14,7 +15,7 @@ import {
 
 const ART = "mods/r5-sigcom/";
 const MONO = "JetBrains Mono";
-const BUILD = "5.1.9";
+const BUILD = "5.3.1";
 const STATE = "r5.state";
 const LOG = "r5.log";
 
@@ -244,6 +245,37 @@ function meterFrames(status, rows, seed) {
   });
 }
 
+// A wireframe globe as dot-matrix text: one string per row per frame, in three
+// layers (far side, near side, equator) that share the frames clock and stay in
+// step. Lines every 30° of longitude and latitude, tilted 23° toward the viewer.
+const GLOBE_N = 15; // frames per 30° step; the grid repeats every 30°, so this loops seamlessly
+function globeFrames(cols, rows) {
+  const layers = [0, 1, 2].map(() => Array.from({ length: rows }, () => []));
+  const tilt = (23 * Math.PI) / 180, ct = Math.cos(tilt), st = Math.sin(tilt);
+  const rx = (cols - 1) / 2, ry = (rows - 1) / 2;
+  for (let f = 0; f < GLOBE_N; f++) {
+    const rot = (f / GLOBE_N) * (Math.PI / 6);
+    const g = [0, 1, 2].map(() => Array.from({ length: rows }, () => Array(cols).fill(" ")));
+    const plot = (lat, lon, eq) => {
+      const l = lon + rot;
+      const x = Math.cos(lat) * Math.sin(l), y = Math.sin(lat), z = Math.cos(lat) * Math.cos(l);
+      const y2 = y * ct - z * st, z2 = y * st + z * ct;
+      const c = Math.round(rx + x * rx), r = Math.round(ry - y2 * ry);
+      if (r < 0 || r >= rows || c < 0 || c >= cols) return;
+      if (z2 >= 0) { g[eq ? 2 : 1][r][c] = "•"; g[0][r][c] = " "; }
+      else if (g[1][r][c] === " " && g[2][r][c] === " ") g[0][r][c] = "·";
+    };
+    const D = Math.PI / 180;
+    for (let m = 0; m < 360; m += 30) for (let a = -72; a <= 72; a += 2) plot(a * D, m * D, false);
+    for (const p of [-60, -30, 30, 60]) for (let a = 0; a < 360; a += 2) plot(p * D, a * D, false);
+    for (let a = 0; a < 360; a += 1.5) plot(0, a * D, true);
+    // a near-side cell beats the far side drawn earlier in the same cell
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) if (g[1][r][c] !== " " || g[2][r][c] !== " ") g[0][r][c] = " ";
+    for (let k = 0; k < 3; k++) for (let r = 0; r < rows; r++) layers[k][r].push(g[k][r].join(""));
+  }
+  return layers;
+}
+
 function sparkFrames(seed, len) {
   const rand = rng(seed);
   const seq = Array.from({ length: 24 }, () => 2 + Math.floor(rand() * 6));
@@ -266,15 +298,17 @@ function hexFrames(seed) {
 }
 
 function rule(title, right) {
-  return h_flex().w_full().items_center().gap(6).mb(4)
-    .child(div().text_color(C.dim).text_size(10).child(title))
-    .child(div().flex_1().h(1).bg(C.rule))
-    .when(right, (el) => el.child(div().text_color(C.dim).text_size(10).child(right)));
+  // Title never shrinks; the right label truncates and the line gives way first,
+  // so narrow columns clip instead of letting the two labels run into each other.
+  return h_flex().w_full().min_w(0).overflow_hidden().items_center().gap(6).mb(4)
+    .child(div().flex_shrink_0().whitespace_nowrap().text_color(C.dim).text_size(10).child(title))
+    .child(div().flex_1().min_w(6).h(1).bg(C.rule))
+    .when(right, (el) => el.child(div().min_w(0).truncate().text_color(C.dim).text_size(10).child(right)));
 }
 
 // Fixed relay stations around the mesh, as fractions of the network box.
 const RELAYS = [
-  { name: "K5-RLY", x: 0.07, y: 0.18 }, { name: "STN-01", x: 0.93, y: 0.16 },
+  { name: "K5-RLY", x: 0.07, y: 0.18 }, { name: "HBS-01", x: 0.93, y: 0.16 },
   { name: "GRID-32", x: 0.06, y: 0.86 }, { name: "SAT-5V", x: 0.94, y: 0.84 },
 ];
 
@@ -283,6 +317,28 @@ function strokeLines(pairs, width, dash) {
   if (dash) b = b.dash_array(dash);
   for (const [x1, y1, x2, y2] of pairs) b = b.move_to(x1, y1).line_to(x2, y2);
   return b.build();
+}
+
+// Pie slices as filled wedges: [[fraction, color], ...] around (c, c), radius r.
+const MIX_W = 190;
+const PIE_COLORS = ["#46D97A", "#E3C76A", "#6FB7FF", "#3FBF9A", "#B48EDC", "#F0D27A", "#9C9A72", "#7CF0A2"];
+function pieSlices(parts, c, r) {
+  const out = [];
+  let a0 = -Math.PI / 2;
+  const pt = (a) => [c + r * Math.cos(a), c + r * Math.sin(a)];
+  for (const [f, color] of parts) {
+    if (!(f > 0.001)) continue;
+    if (f >= 0.999) { // a full circle: two half wedges
+      const [x0, y0] = pt(a0), [x1, y1] = pt(a0 + Math.PI);
+      out.push([PathBuilder.fill().move_to(x0, y0).arc_to(r, r, 0, false, true, x1, y1).arc_to(r, r, 0, false, true, x0, y0).close().build(), color]);
+      break;
+    }
+    const a1 = a0 + f * Math.PI * 2;
+    const [x0, y0] = pt(a0), [x1, y1] = pt(a1);
+    out.push([PathBuilder.fill().move_to(c, c).line_to(x0, y0).arc_to(r, r, 0, f > 0.5, true, x1, y1).close().build(), color]);
+    a0 = a1;
+  }
+  return out;
 }
 
 // The dossier shows the agent's own logo (Herdr's program icon), framed like an ID plate.
@@ -354,7 +410,7 @@ async function fetchGdp() {
 
 // ---- treasury: dummy balances that drift, for show only
 const ACCOUNTS = [["OPERATIONS", "R5-07-114", 4218093.17], ["RESERVE", "R5-07-220", 12750400.0], ["FIELD EXP.", "R5-07-305", 386211.42]];
-const TXNS = ["WIRE OUT  RL-5V", "WIRE IN   K5-RLY", "ACH OUT   STN-01", "SETTLE    GRID-32", "WIRE IN   SAT-5V", "FEE       RIGLINE", "ACH IN    CMDR-5", "WIRE OUT  OP-DESK"];
+const TXNS = ["WIRE OUT  RL-5V", "WIRE IN   K5-RLY", "ACH OUT   HBS-01", "SETTLE    GRID-32", "WIRE IN   SAT-5V", "FEE       RIGLINE", "ACH IN    CMDR-5", "WIRE OUT  OP-DESK"];
 const TREASURY_STEPS = 30;
 function treasuryFrames() {
   const rand = rng(5150);
@@ -470,6 +526,12 @@ export default class R5Sigcom extends View {
       this.sync = Array.from({ length: 12 }, (_, i) => hexFrames(101 + i).map((s) => "SYNC " + s.slice(6, 10).toUpperCase() + " \u00b7\u00b7\u00b7\u00b7"));
       this.prepWave(cx);
       cx.timer.every(500, (cx) => this.prepWave(cx));
+      this.mix = {};      // address -> shown share (0..1)
+      this.mixTo = {};    // address -> target share
+      this.mixFrom = {};
+      this.mixStep = 0;
+      cx.timer.every(3000, (cx) => this.retargetMix(cx));
+      cx.timer.every(90, (cx) => this.stepMix(cx));
     }
     if (this.role === "banner") {
       this.start();
@@ -780,7 +842,7 @@ export default class R5Sigcom extends View {
       .child(div().text_color(dormant ? C.faint : C.hi).child("HERD OPERATIONS"))
       .child(div().text_color(C.dim).child(sub))
       .child(div().text_color(C.dim).when(boot, (el) => el.loop("opacity", { from: 0.4, to: 1, period: 700 })).child(uplink))
-      .child(div().text_color(C.dim).child("STN R5-01 \u00b7 SECTOR 5"))
+      .child(div().text_color(C.dim).child("STN HOBBS-NM-01 \u00b7 GRID 32-41"))
       .when(!dormant && !boot && list.length, (el) => el.child(div().truncate().text_color(C.gold2)
         .child("OPS \u00b7 " + [...new Set(list.map((a) => opName(a.space)))].join(" \u00b7 "))));
     const codeRows = v_flex().w_full().gap(2).children(codes.map(([k, v]) => h_flex().w_full()
@@ -788,7 +850,7 @@ export default class R5Sigcom extends View {
       .child(div().flex_1().truncate().text_color(dormant ? C.goldDim : C.gold2).child(v))));
 
     const visible = dormant || (boot && ph < 5) ? [] : list;
-    const R = compact ? 116 : 140;
+    const R = Math.max(96, Math.min(compact ? 116 : 128, Math.floor((this.size.width - 28 - 12) / 2)));
     const radar = div().relative().w(R).h(R).flex_shrink_0()
       .child(svg(ART + "radar-grid.svg").absolute().left(0).top(0).w(R).h(R).text_color(dormant ? C.ghost : C.rule))
       .child(svg(ART + "radar-sweep.svg").absolute().left(0).top(0).w(R).h(R)
@@ -804,17 +866,26 @@ export default class R5Sigcom extends View {
           .bg(STATUS_COLOR[a.status] || C.olive)
           .loop("opacity", a.status === "blocked" ? { from: 0.25, to: 1, period: 500 } : { from: 0.35, to: 1, period: 4000 });
       }));
-    const sweepLabel = v_flex().gap(2).text_size(10)
-      .child(div().text_color(C.dim).child("SWEEP"))
-      .child(div().text_color(dormant ? C.faint : C.text).child(dormant ? "LOW" : boot ? "FAST" : "NOMINAL"))
-      .child(div().mt(6).text_color(C.dim).child("CONTACTS"))
-      .child(div().text_color(dormant ? C.faint : C.text).child(String(visible.length)))
-      .child(div().mt(6).text_color(C.dim).child("BLOCKED"))
-      .child(div().text_color(visible.some((a) => a.status === "blocked") ? C.red : dormant ? C.faint : C.text)
-        .child(String(visible.filter((a) => a.status === "blocked").length)))
-      .child(div().mt(6).text_color(C.dim).child("INTEL"))
-      .child(div().text_color(dormant ? C.faint : C.gold2)
-        .child(dormant ? "\u2014" : `${Object.values(this.intelCount).reduce((n, v) => n + v, 0)} FILES`));
+    const anyBlocked = visible.some((a) => a.status === "blocked");
+    const stat = (k, v, col) => v_flex().gap(1).child(div().text_color(C.dim).child(k)).child(div().text_color(col).child(v));
+    const sweepLabel = h_flex().w_full().justify_between().text_size(10)
+      .child(stat("SWEEP", dormant ? "LOW" : boot ? "FAST" : "NOMINAL", dormant ? C.faint : C.text))
+      .child(stat("CONTACTS", String(visible.length), dormant ? C.faint : C.text))
+      .child(stat("BLOCKED", String(visible.filter((a) => a.status === "blocked").length), anyBlocked ? C.red : dormant ? C.faint : C.text))
+      .child(stat("INTEL", dormant ? "\u2014" : `${Object.values(this.intelCount).reduce((n, v) => n + v, 0)} FILES`, dormant ? C.faint : C.gold2));
+
+    // Spinning wireframe globe beside the scope. 6px mono cells: 3.6px wide, 6px tall.
+    const gCols = Math.floor(R / 3.6) | 1, gRows = Math.floor(R / 6) | 1;
+    const gKey = "globe" + gCols + "x" + gRows;
+    const gl = this.cache[gKey] || (this.cache[gKey] = GLOBE_FRAMES[gKey] || globeFrames(gCols, gRows));
+    const gMs = dormant ? 400 : boot ? 45 : 110;
+    const gCol = [dormant ? C.ghost : "#1E4A2E", dormant ? C.faint : anyBlocked ? C.red : C.green, dormant ? C.goldDim : C.gold2];
+    const gPadX = Math.floor((R - gCols * 3.6) / 2), gPadY = Math.floor((R - gRows * 6) / 2);
+    const globe = div().relative().w(R).h(R).flex_shrink_0()
+      .child(svg(ART + "globe-ring.svg").absolute().left(0).top(0).w(R).h(R).text_color(dormant ? C.ghost : C.rule))
+      .children(gl.map((rowsF, k) => v_flex().absolute().left(gPadX).top(gPadY).gap(0)
+        .children(rowsF.map((fr) => div().h(6).line_height("6px").text_size(6).font_family(MONO).whitespace_nowrap()
+          .text_color(gCol[k]).frames(fr, gMs)))));
 
     const sparkLen = Math.max(8, Math.floor((this.size.width - 44) / 6.8));  // 11px mono is ~6.6px a cell
     let assets;
@@ -862,8 +933,10 @@ export default class R5Sigcom extends View {
       .child(codeRows)
       .child(browse)
       .child(v_flex().w_full()
-        .child(rule("RADAR", null))
-        .child(h_flex().w_full().gap(14).items_center().child(radar).child(sweepLabel)))
+        .child(rule("RADAR \u00b7 GLOBAL COVERAGE", null))
+        .child(h_flex().w_full().justify_between().items_center().child(radar).child(globe))
+        .child(div().h(6))
+        .child(sweepLabel))
       .child(v_flex().w_full().flex_1().min_h(0)
         .child(rule("ASSETS ON STATION", dormant ? "NONE" : `${list.length} TRACKED`))
         .child(assets))
@@ -1112,7 +1185,7 @@ export default class R5Sigcom extends View {
       .child(div().text_color(alertColor).child(alertText));
     const header = (narrow ? v_flex().items_start().gap(8) : h_flex().justify_between().items_center()).w_full()
       .child(v_flex().gap(2)
-        .child(div().text_size(10).text_color(C.dim).child("RIG5IVE SIGNALS COMMAND \u00b7 FIELD STATION"))
+        .child(div().text_size(10).text_color(C.dim).child("RIG5IVE SIGNALS COMMAND \u00b7 HOBBS STATION"))
         .child(div().text_size(17).font_weight(700).text_color(C.gold2).child("ASSET DOSSIER")))
       .child(alertBadge);
     const strip = div().w_full().px(8).py(3).bg("#0F3A20").text_color(C.text).text_size(10)
@@ -1170,6 +1243,79 @@ export default class R5Sigcom extends View {
     this.wave = { key: k.key, rows: k.rows, strips: waveFrames(k.cols, k.mode, k.working, 11, k.rows),
       audio: audioFrames(k.cols, k.mode, k.working, k.blocked, 23) };
     if (cx && !checking()) cx.notify();
+  }
+
+  // ---- signal mix: each asset's share of traffic. Targets move every 3s from
+  // agent status, recent intercept lines and a little drift; the pie eases to
+  // them in 4 short steps, so the feed redraws only a handful of times.
+  retargetMix(cx) {
+    const st = readState();
+    if (st.mode !== "active" || !this.pieOn) return;
+    const list = agents();
+    if (!list.length) return;
+    const base = { working: 4, blocked: 2.6, done: 1.2, idle: 0.5 };
+    const now = Date.now();
+    const recent = {};
+    for (const e of this.intel) if (now - e.at < 45000) recent[e.sign] = (recent[e.sign] || 0) + 1;
+    this.mixTick = (this.mixTick || 0) + 1;
+    const w = {};
+    let sum = 0;
+    for (const a of list) {
+      const r = rng(hash(a.address) + this.mixTick * 7919)();
+      const v = (base[a.status] || 0.5) * (0.7 + 0.6 * r) * (1 + 0.35 * (recent[sign(st, a)] || 0));
+      w[a.address] = v; sum += v;
+    }
+    this.mixFrom = {};
+    for (const a of list) this.mixFrom[a.address] = this.mix[a.address] || 0;
+    this.mixTo = {};
+    for (const k in w) this.mixTo[k] = w[k] / sum;
+    this.mixStep = 4;
+    this.stepMix(cx);
+  }
+  stepMix(cx) {
+    if (!this.mixStep) return;
+    this.mixStep--;
+    const t = 1 - this.mixStep / 4, e = t * t * (3 - 2 * t);
+    const next = {};
+    for (const k in this.mixTo) next[k] = (this.mixFrom[k] || 0) + (this.mixTo[k] - (this.mixFrom[k] || 0)) * e;
+    this.mix = next;
+    cx.notify();
+  }
+
+  renderMix(st, list, dormant, boot, H) {
+    const P = Math.max(64, Math.min(96, H - 44));
+    const c = P / 2, r = P / 2 - 3;
+    const live = !dormant && !boot && list.length && Object.keys(this.mix).length;
+    const rows = live ? list.filter((a) => this.mix[a.address] != null)
+      .map((a, i) => ({ a, f: this.mix[a.address], col: a.status === "blocked" ? C.red : PIE_COLORS[(hash(a.address) >>> 3) % PIE_COLORS.length] }))
+      .sort((x, y) => y.f - x.f) : [];
+    const top = rows[0];
+    const pie = div().relative().w(P).h(P).flex_shrink_0()
+      .when(!live, (el) => el.child(div().absolute().left(3).top(3).w(P - 6).h(P - 6).rounded(P).bg(dormant ? C.ghost : "#0C1F15")))
+      .when(live, (el) => el.children(pieSlices(rows.map((x) => [x.f, x.col]), c, r)
+        .map(([path, col]) => window.paint_path(path, col).absolute().left(0).top(0).w(P).h(P))))
+      .when(live && rows.length > 1, (el) => {
+        let a = -Math.PI / 2;
+        const cuts = rows.map((x) => { const v = [c, c, c + r * Math.cos(a), c + r * Math.sin(a)]; a += x.f * Math.PI * 2; return v; });
+        return el.child(window.paint_path(strokeLines(cuts, 1.5), C.panel).absolute().left(0).top(0).w(P).h(P));
+      })
+      .child(svg(ART + "globe-ring.svg").absolute().left(0).top(0).w(P).h(P).text_color(dormant ? C.ghost : C.rule))
+      .child(v_flex().absolute().left(Math.round(c - r * 0.52)).top(Math.round(c - r * 0.52)).w(Math.round(r * 1.04)).h(Math.round(r * 1.04))
+        .rounded(P).bg(C.panel).items_center().justify_center().gap(0)
+        .child(div().text_size(P >= 90 ? 15 : 12).font_weight(700).text_color(live ? C.hi : dormant ? C.faint : C.gold2)
+          .when(!live && !dormant, (el) => el.loop("opacity", { from: 0.3, to: 1, period: 700 }))
+          .child(live ? Math.round(top.f * 100) + "%" : dormant ? "—" : "SYNC"))
+        .child(div().text_size(8).text_color(C.dim).child(live ? sign(st, top.a) : dormant ? "NO TRAFFIC" : "···")));
+    const legend = v_flex().flex_1().min_w(0).gap(1)
+      .when(!rows.length, (el) => el.child(div().text_color(C.faint).child(dormant ? "NO SIGNAL" : "ACQUIRING")))
+      .children(rows.slice(0, Math.max(2, Math.floor((H - 40) / 15))).map((x) => h_flex().h(15).gap(6).items_center().min_w(0)
+        .tooltip(unit(x.a))
+        .child(div().w(7).h(7).flex_shrink_0().rounded(1).bg(x.col))
+        .child(div().w(36).flex_shrink_0().text_color(C.hi).child(sign(st, x.a)))
+        .child(div().flex_shrink_0().text_color(x.col).child(String(Math.round(x.f * 100)).padStart(3, " ") + "%"))));
+    return v_flex().w(MIX_W).flex_shrink_0().gap(1).overflow_hidden()
+      .child(rule("SIGNAL MIX", live ? "% TRAFFIC" : dormant ? "STANDBY" : "SYNC"))
+      .child(h_flex().w_full().gap(10).items_start().pt(2).child(pie).child(legend));
   }
 
   renderFeed(st) {
@@ -1250,7 +1396,7 @@ export default class R5Sigcom extends View {
       .child(div().id("r5-intercept-toggle").cursor_pointer()
         .tooltip(interceptOff ? "Resume the live intercept" : "Pause the live intercept")
         .on_click(() => setShared("r5.intercept", interceptOff ? "on" : "off"))
-        .child(rule("INTERCEPT", interceptOff ? "PAUSED" : !dormant && !boot && this.intel.length ? "LIVE \u00b7 REDACTED" : "STANDBY")))
+        .child(rule("INTERCEPT", interceptOff ? "PAUSED" : !dormant && !boot && this.intel.length ? (this.pieOn ? "LIVE" : "LIVE \u00b7 REDACTED") : "STANDBY")))
       .children(interLines.map((el) => el.whitespace_nowrap().h(15)));
 
     const log = readLog().slice(0, lines);
@@ -1275,11 +1421,17 @@ export default class R5Sigcom extends View {
         .child(div().text_color(C.dim).flex_shrink_0().child(e.t))
         .child(div().truncate().text_color(LOG_COLOR[e.c] || C.text).child(e.m))));
 
+    // Room left for the intercept column; the signal mix takes MIX_W of it when there's enough.
+    const sitW = Math.max(240, Math.min(380, Math.floor(W * 0.26)));
+    const room = W - 24 - specW - sitW - 32;               // intercept column before the treasury
+    const showMix = room >= MIX_W + 14 + 120;               // the signal mix wins over the treasury
+    const showTreasury = W > 1150 && room - 276 >= (showMix ? MIX_W + 14 + 120 : 180);
+    if (showMix !== this.pieOn) this.pieOn = showMix;
     return this.root(h_flex()).size_full().items_start().bg(C.panel).font_family(MONO).text_size(11).text_color(C.text)
       .px(12).py(10).gap(16).overflow_hidden()
       .child(spectrum)
-      .when(W > 640, (el) => el.child(intercept))
-      .when(W > 1150, (el) => el.child(treasury))
+      .when(W > 640, (el) => el.child(showMix ? h_flex().flex_1().min_w(0).gap(14).items_start().child(intercept).child(this.renderMix(st, list, dormant, boot, H)) : intercept))
+      .when(showTreasury, (el) => el.child(treasury))
       .child(sitrep);
   }
 }

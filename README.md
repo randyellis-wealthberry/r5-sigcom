@@ -47,7 +47,11 @@ The window title and dock badge follow the OPS-CON level.
 
 **Identity block.** Agency, station designator, uplink clock (T+ since boot) and the active operation codenames, plus a faux routing card: directive, compartment, case number, posture and authorization chain.
 
-**Radar.** A sweeping scope with one contact per agent, colored by status. Beside it: sweep state, contact count, blocked count and intel files collected.
+**Radar.** A sweeping scope with one contact per agent, colored by status. Under it: sweep state, contact count, blocked count and intel files collected.
+
+**Global coverage globe.** A green wireframe globe spins beside the radar, drawn as a dot matrix: near-side grid lines bright, far side dim, equator in brass. It turns red when an agent is blocked, slows to a crawl when the platform is dormant and whips around during boot.
+
+![Spinning grid globe](docs/globe.png)
 
 **Assets on station.** Each agent gets an asset number (R5-01, R5-02, ...), its status and a live activity meter. Click an asset to open its dossier.
 
@@ -125,6 +129,24 @@ cp -R r5-sigcom/layouts r5-sigcom/themes r5-sigcom/mods ~/.config/herdr-app/
 ```
 
 Best with JetBrains Mono installed.
+
+Or run the installer, which works on macOS and Linux:
+
+```sh
+git clone https://github.com/randyellis-wealthberry/r5-sigcom.git
+./r5-sigcom/install.sh
+```
+
+It never overwrites: anything already installed under the same name is moved to `<name>.bak-<time>`. It checks each mod with `herdr-app check` and switches to the layout. Your other layouts and `keys.json` are left alone.
+
+### Omarchy and other Linux
+
+Same steps; `install.sh` handles the differences:
+
+- **Font.** Omarchy ships JetBrains Mono as `JetBrainsMono Nerd Font`. If plain `JetBrains Mono` isn't installed, the installer points the layout and console at the Nerd Font. If neither is there, install it with `sudo pacman -S ttf-jetbrains-mono`.
+- **Keys.** Herdr's Linux defaults use `ctrl` where macOS uses `cmd`; the layout doesn't change any keys.
+- **Reveal in Finder** in the file menu is macOS-only and hides itself elsewhere.
+- **Needs** `curl` (GDP ticker) and `git` (change counts); `terminal-browser` is optional.
 
 ### What gets installed
 ```
