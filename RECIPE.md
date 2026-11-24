@@ -6,7 +6,7 @@ A signals-intelligence ops console for your agents, from a fictional agency, Rig
 
 ## What you see
 
-Theme `r5-sigcom`: phosphor green on near-black, with brass accents. Font: JetBrains Mono 13 for the terminals and the UI.
+Theme `r5-sigcom`: phosphor green on near-black, with brass accents. Font: JetBrains Mono 13 for the terminals and the UI (on Arch/Omarchy: `ttf-jetbrains-mono`; the Nerd Font variant has a different family name).
 - Colors: canvas `#030506`, background `#05080A`, chrome `#070D0A`, surface `#0A1410`, border `#1B3326`, text `#BFF5CF`, muted `#5E8F6E`, dim `#3E6B4F`.
 - Accent / brass: `#C9A445`, with a highlight gold of `#E3C76A`.
 - Status: working `#46D97A`, blocked `#FF4D42`, done `#6FB7FF`, idle `#3E6B4F`.
@@ -70,7 +70,7 @@ Left to right, top to bottom:
   - The banner goes amber (HANDSHAKE) and the intercept shows scrolling hex SYNC lines.
 - **Active:**
   - OPS-CON goes from 5 to 1 as more agents work.
-  - The window title is `R5-SIGCOM · OPS-CON n`, and the dock badge shows the blocked count.
+  - The window title is `R5-SIGCOM · OPS-CON n`, and the dock badge shows the blocked count (where the desktop supports badges; Hyprland/Omarchy may not).
   - Each agent gets a stable asset number and a codename from a fixed list (NIGHTJAR, PUMPJACK, DUSTDEVIL, …).
 - **Statuses:**
   - **Working:** green dot, moving meter, spectrum energy.
@@ -94,8 +94,8 @@ Left to right, top to bottom:
     - CLOSE and GO TO TERMINAL (`agent.focus`) buttons
   - The panel follows the focused agent, or stays on one you clicked.
 - **Right-click a tab:** a menu with Split right, Split down, New agent in split (each installed agent), Rename, Close and More….
-- **Right-click a folder** (or the Files header): Start agent here (each installed agent; new tab, split right or split down), and Reveal in Finder.
-- **OPEN BROWSER:** if `terminal-browser` is on PATH, it opens in a right split. Otherwise a toast explains how to install it.
+- **Right-click a folder** (or the Files header): Start agent here (each installed agent; new tab, split right or split down), and Reveal in Finder on macOS or Open in file manager on Linux.
+- **OPEN BROWSER:** if `terminal-browser` is on PATH, it opens in a right split. Otherwise a toast explains how to install it (`brew` on macOS, a generic PATH hint on Linux).
 - **Treasury:** balances drift and return to base, and the transaction log scrolls.
 - **GDP ticker:** cycles USA, CHN, DEU, JPN, IND, GBR, FRA… with ▲/▼ growth figures.
 
@@ -128,14 +128,15 @@ Left to right, top to bottom:
 - **Programs it runs:**
   - `curl` to `api.worldbank.org`: indicators NY.GDP.MKTP.CD and NY.GDP.MKTP.KD.ZG, once a day, cached in shared state. Built-in 2025 figures cover being offline.
   - `git status --porcelain` in agent folders.
-  - `<shell> -lc "command -v terminal-browser"`.
-  - `open -R` (Reveal in Finder).
+  - `<shell> -lc "command -v terminal-browser"`, trying `/bin/zsh`, then `/bin/bash`, then `/bin/sh`.
+  - `open -R` (Reveal in Finder, macOS) or `xdg-open` on the folder, or a file's parent folder (Linux). Gate on `window().platform`.
   - `r5-files` also runs `sh`/`git` to list folders, like the shipped mod.
 - **Art in `mods/r5-sigcom/`:** `seal-rings.svg`, `ticks.svg`, `seal-core.svg`, `mark.svg`, `radar-grid.svg`, `radar-sweep.svg`. Spin the sweep and the outer ring.
 
 ## Watch out
 
 - **Network and programs:** the GDP fetch is the only network call. It reads agent screens (`hc read`) and runs the programs listed above. It reads nothing outside agent folders and its own.
+- **Install:** `sh install.sh` copies `layouts/`, `themes/` and `mods/` into `${XDG_CONFIG_HOME:-~/.config}/herdr-app/` on macOS and Linux, warns if JetBrains Mono is missing, and runs `herdr-app do layout.switch --name r5-sigcom` if the CLI is found.
 - **Install the theme too:** copy `themes/r5-sigcom.json` along with the layout and mods. Without it the layout falls back to default colors.
 - **Line height:** `.line_height(16)` is a multiplier. Use the string `"16px"`, or stacked strips overlap and vanish.
 - **Fonts:** braille glyphs don't render in the mod UI font. Use block elements (▁…█ ▀ ▔) and box drawing (─ │).
@@ -152,9 +153,11 @@ Left to right, top to bottom:
 
 ## Done when
 
+- `sh install.sh` installs and switches to the layout on both macOS and Linux (Omarchy).
+
 - With no agents, the banner reads RIGLINE // STANDBY and assets say AWAITING TASKING.
 - Starting one agent runs the amber boot sequence, then a green active banner with OPS-CON and an R5-01 asset row.
-- A blocked agent turns its row and the banner red, shows NEEDS AUTHORIZATION in its dossier, and puts a blocked count on the dock badge.
+- A blocked agent turns its row and the banner red, shows NEEDS AUTHORIZATION in its dossier, and puts a blocked count on the dock badge (macOS; skip on desktops without badges).
 - The spectrum bars move while an agent works and fall to a flat pulsing carrier when none do.
 - Intercept lines appear for a busy background agent with secrets shown as █. Clicking INTERCEPT shows PAUSED.
 - The tab-bar Dossier button opens the right panel, and GO TO TERMINAL focuses that agent.
