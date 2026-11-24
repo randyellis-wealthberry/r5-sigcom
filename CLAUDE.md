@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-R5-SIGCOM is a layout + theme + mods package for the [Herdr](https://github.com/jerryfane/herdr) desktop app: a fictional signals-intelligence "ops floor" whose visuals are driven by real agent status. There is no build system, package manager, or test suite. `RECIPE.md` is the authoritative spec (layout tree, colors, behaviors, "Watch out" gotchas, and "Done when" acceptance criteria) — keep it in sync with code changes.
+R5-SIGCOM is a layout + theme + mods package for the [Herdr](https://github.com/jerryfane/herdr) desktop app: a signals-intelligence-themed "ops floor" that promotes the Rig5ive agency (a real business owned by the user), whose visuals are driven by real agent status. There is no build system, package manager, or test suite. `RECIPE.md` is the authoritative spec (layout tree, colors, behaviors, "Watch out" gotchas, and "Done when" acceptance criteria) — keep it in sync with code changes.
 
 ## Commands
 
@@ -42,4 +42,4 @@ Verification is manual against the "Done when" list in `RECIPE.md`.
 - `h_flex` centers children by default; add `.items_start()` in feed columns.
 - Inside popups, `flex_1` / `min_h(0)` collapses them to nothing.
 - Intercept must skip the focused agent and poll no faster than a few seconds, or typing lags.
-- Everything must stay fictional: no real agency seals, names, or insignia.
+- Rig5ive branding is real and intentional; the intelligence-agency trappings (codes, directives, treasury figures) are invented. Never use real government agency seals, names, or insignia.

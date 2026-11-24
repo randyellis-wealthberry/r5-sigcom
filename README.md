@@ -6,7 +6,7 @@
 
 **Rig5ive Signals Command — a signals-intelligence ops terminal for the Herdr desktop app**
 
-`CLASSIFICATION: UNCLASSIFIED // FICTIONAL` · `DIRECTIVE R5-DIR 5-05 REV C` · `COMPARTMENT RIGLINE / HERDSMAN`
+`CLASSIFICATION: UNCLASSIFIED` · `DIRECTIVE R5-DIR 5-05 REV C` · `COMPARTMENT RIGLINE / HERDSMAN`
 
 ![R5-SIGCOM preview](preview.png)
 
@@ -16,7 +16,7 @@
 
 R5-SIGCOM turns Herdr into an intelligence-agency style operations floor, modeled on the look of an NSA-style signals terminal: seals, radar sweeps, intercept feeds, spectrum analyzers and dossiers. Every moving part is driven by your real AI agents. When an agent works, the floor lights up. When one needs your approval, the console goes red.
 
-The agency is fictional. The telemetry is real.
+Built by Rig5ive. The ops theater is for show. The telemetry is real.
 
 ## Contents
 - [Operating states](#operating-states)
@@ -143,7 +143,7 @@ mods/r5-files/            file tree with "start agent here"
 
 ## Disclaimer and credits
 
-R5-SIGCOM is a fictional agency created for entertainment. It is **not affiliated with, endorsed by, or a replica of** the NSA, CIA or any government body, and uses no real government seals or insignia. All codes, case numbers, stations and financial figures are invented.
+R5-SIGCOM is a themed workspace made by Rig5ive. The intelligence-agency styling is for show: it is **not affiliated with, endorsed by, or a replica of** the NSA, CIA or any government body, and uses no real government seals or insignia. All codes, case numbers, stations and financial figures are invented.
 
 `mods/r5-tabs` and `mods/r5-files` are modified versions of the tabs and files mods that ship with Herdr. Credit for the originals goes to the Herdr authors, under Herdr's license.
 

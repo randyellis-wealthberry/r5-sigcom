@@ -2,7 +2,7 @@
 // One mod, four roles set by props: "rail" (seal, identity, radar, assets, mesh),
 // "banner" (OPS-CON strip; also runs the state machine), "feed" (spectrum, live
 // intercept, sitrep log) and "dossier" (an agent's file card, opened as a dialog).
-// Every code, compartment and directive is fictional flavor.
+// Rig5ive is real; every code, compartment and directive is invented flavor.
 
 import { View, div, svg, image, PathBuilder } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";

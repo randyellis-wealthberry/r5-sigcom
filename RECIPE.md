@@ -1,8 +1,12 @@
 # R5-SIGCOM
 
-A signals-intelligence ops console for your agents, from a fictional agency, Rig5ive Signals Command. A brass command seal, radar and asset roster run down the left. Over the terminals sit a red or green classification banner and a scrolling GDP ticker. Along the bottom are a spectrum analyzer, a redacted intercept feed, a fake treasury desk and a SITREP log. A dossier panel on the right gives each agent a codename and a plain-language alert. Everything moves with agent status: dark when no agents run, a boot sequence when the first one starts, red when one needs approval.
+A signals-intelligence ops console for your agents, themed as Rig5ive Signals Command, a showcase from the Rig5ive agency. A brass command seal, radar and asset roster run down the left. Over the terminals sit a red or green classification banner and a scrolling GDP ticker. Along the bottom are a spectrum analyzer, a redacted intercept feed, a fake treasury desk and a SITREP log. A dossier panel on the right gives each agent a codename and a plain-language alert. Everything moves with agent status: dark when no agents run, a boot sequence when the first one starts, red when one needs approval.
 
-![R5-SIGCOM](preview.png)
+![R5-SIGCOM on macOS](preview.png)
+
+On Linux (Omarchy / Hyprland) there is no title bar, so the floor starts at the classification banner:
+
+![R5-SIGCOM on Linux](docs/preview-linux.png)
 
 ## What you see
 
@@ -149,7 +153,7 @@ Left to right, top to bottom:
   - The mesh fits about 6 agents around the hub. Asset meters show the first 8.
   - The treasury needs a feed wider than 1150px, and the intercept one wider than 640px.
 - **Reveal in Finder** on macOS; on Linux the same menu item is "Open in file manager" (`xdg-open`).
-- **Fictional:** all codes, stations and money are fictional. Use no real agency seals or names.
+- **Branding:** Rig5ive is a real agency and its name and emblem are used on purpose. Every code, station, case number and dollar figure is invented. Use no government agency seals or names.
 
 ## Done when
 
