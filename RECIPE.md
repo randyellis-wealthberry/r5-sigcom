@@ -1,6 +1,6 @@
 # R5-SIGCOM
 
-A signals-intelligence ops console for your agents, themed as Rig5ive Signals Command, a showcase from the Rig5ive agency. A brass command seal, radar and asset roster run down the left. Over the terminals sit a red or green classification banner and a scrolling GDP ticker. Along the bottom are a spectrum analyzer, a redacted intercept feed, a fake treasury desk and a SITREP log. A dossier panel on the right gives each agent a codename and a plain-language alert. Everything moves with agent status: dark when no agents run, a boot sequence when the first one starts, red when one needs approval.
+A signals-intelligence ops console for your agents, themed as Rig5ive Signals Command, a showcase from the Rig5ive agency. A brass command seal, radar and asset roster run down the left. Over the terminals sit a red or green classification banner and a scrolling GDP ticker. Along the bottom are a spectrum analyzer, a redacted intercept feed, a treasury desk and a SITREP log. A dossier panel on the right gives each agent a codename and a plain-language alert. Everything moves with agent status: dark when no agents run, a boot sequence when the first one starts, red when one needs approval.
 
 ![R5-SIGCOM on macOS](preview.png)
 
@@ -57,7 +57,7 @@ Left to right, top to bottom:
     - Header: n/m TASKED.
   - **Intercept** (when wider than 640px): up to 6 lines of `R5-0n  text`, header LIVE · REDACTED.
   - **Treasury** (when wider than 1150px):
-    - Three accounts: OPERATIONS, RESERVE and FIELD EXP., each with a fake routing number and a balance.
+    - Three accounts: OPERATIONS, RESERVE and FIELD EXP., each with a routing number and a balance.
     - A TOTAL line.
     - A 3-line transaction log (WIRE OUT, ACH IN…). Header: SIM.
   - **SITREP log:** Zulu-stamped lines such as `130241Z R5-02 NEEDS AUTH · OP DUSTDEVIL`, colored by event.
@@ -73,7 +73,7 @@ Left to right, top to bottom:
   - Six phases at 0 / 500 / 1100 / 1700 / 2300 / 2900ms: seal verified, keys exchanged, auth, tasking signal, uplink, platform online.
   - The banner goes amber (HANDSHAKE) and the intercept shows scrolling hex SYNC lines.
 - **Active:**
-  - OPS-CON goes from 5 to 1 as more agents work.
+  - OPS-CON is 5 with nothing blocked, 3 with one blocked agent, 2 with several, and 1 when every agent (more than one) is blocked.
   - The window title is `R5-SIGCOM · OPS-CON n`, and the dock badge shows the blocked count (where the desktop supports badges; Hyprland/Omarchy may not).
   - Each agent gets a stable asset number and a codename from a fixed list (NIGHTJAR, PUMPJACK, DUSTDEVIL, …).
 - **Statuses:**
@@ -153,7 +153,7 @@ Left to right, top to bottom:
   - The mesh fits about 6 agents around the hub. Asset meters show the first 8.
   - The treasury needs a feed wider than 1150px, and the intercept one wider than 640px.
 - **Reveal in Finder** on macOS; on Linux the same menu item is "Open in file manager" (`xdg-open`).
-- **Branding:** Rig5ive is a real agency and its name and emblem are used on purpose. Every code, station, case number and dollar figure is invented. Use no government agency seals or names.
+- **Branding:** use the Rig5ive name and emblem as given. Use no government agency seals or names.
 
 ## Done when
 
