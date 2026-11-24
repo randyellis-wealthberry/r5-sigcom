@@ -106,7 +106,7 @@ The panel follows the focused agent, or stays pinned to the one you opened.
 
 **Right-click a tab:** split right, split down, start a new agent in a split, rename, close.
 
-**Right-click a folder in Files:** start any installed agent in that folder (new tab or split), or reveal it in Finder.
+**Right-click a folder in Files:** start any installed agent in that folder (new tab or split), or reveal it in Finder (macOS) / open it in your file manager (Linux).
 
 ## Install
 
@@ -114,17 +114,16 @@ Agents can build it from scratch with [RECIPE.md](RECIPE.md).
 
 Requires the [Herdr](https://github.com/jerryfane/herdr) desktop app.
 
-1. Download the repo as a zip (Code → Download ZIP) or clone it.
-2. Copy `layouts/`, `themes/` and `mods/` into `~/.config/herdr-app/`.
-3. Switch to the layout:
+Works on macOS and Linux (including Omarchy / Arch).
 
 ```sh
 git clone https://github.com/randyellis-wealthberry/r5-sigcom.git
-cp -R r5-sigcom/layouts r5-sigcom/themes r5-sigcom/mods ~/.config/herdr-app/
-~/.local/bin/herdr-app do layout.switch --name r5-sigcom
+sh r5-sigcom/install.sh
 ```
 
-Best with JetBrains Mono installed.
+Or download the zip (Code → Download ZIP), unzip it, and run `sh install.sh` inside the folder. The script copies `layouts/`, `themes/` and `mods/` into `~/.config/herdr-app/` and switches to the layout. If the `herdr-app` CLI isn't on your PATH, pick **r5-sigcom** from Herdr's layout menu.
+
+Best with JetBrains Mono installed (Arch/Omarchy: `sudo pacman -S ttf-jetbrains-mono`).
 
 ### What gets installed
 ```

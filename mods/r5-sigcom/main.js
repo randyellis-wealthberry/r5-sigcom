@@ -610,7 +610,7 @@ export default class R5Sigcom extends View {
       if (found) {
         run("pane.split", { direction: "right", argv: ["terminal-browser"] });
       } else {
-        notify({ title: "Browser not installed", body: "Run in Terminal: brew install terminal-browser", level: "warning", timeout: 9000 });
+        notify({ title: "Browser not installed", body: appWindow()?.platform === "macos" ? "Run in Terminal: brew install terminal-browser" : "Install terminal-browser and put it on your PATH", level: "warning", timeout: 9000 });
       }
     });
   }
@@ -1018,7 +1018,8 @@ export default class R5Sigcom extends View {
       .child(div().frames(["SCANNING ASSETS \u00b7", "SCANNING ASSETS \u00b7\u00b7", "SCANNING ASSETS \u00b7\u00b7\u00b7"], 300)));
     else for (const pr of this.progs) rows.push(row(pr.key, pr, pr.name, pr.run, pr.installed));
     const w = appWindow();
-    const canReveal = !fm.on && w && w.platform === "macos";
+    const plat = w && w.platform;
+    const canReveal = !fm.on && (plat === "macos" || plat === "linux");
     return v_flex().w_full().bg(C.panel).font_family(MONO).text_size(12).text_color(C.text).p(6).gap(1)
       .child(v_flex().w_full().px(8).pt(4).pb(6).gap(2)
         .child(div().text_size(10).text_color(C.gold2).child("START AGENT HERE"))
@@ -1029,8 +1030,12 @@ export default class R5Sigcom extends View {
       .when(canReveal, (el) => el
         .child(div().w_full().h(1).my(4).bg(C.rule))
         .child(h_flex().id("r5-fm-reveal").w_full().h(26).px(8).items_center().rounded(4).cursor_pointer()
-          .hover((s) => s.bg(C.ghost)).on_click(() => { exec("open", ["-R", fm.target]).catch(() => null); close(); })
-          .child("Reveal in Finder")));
+          .hover((s) => s.bg(C.ghost)).on_click(() => {
+            const cmd = plat === "macos" ? ["open", ["-R", fm.target]]
+              : ["xdg-open", [fm.dir ? fm.target : fm.target.replace(/\/[^/]*$/, "") || "/"]];
+            exec(cmd[0], cmd[1]).catch(() => null); close();
+          })
+          .child(plat === "macos" ? "Reveal in Finder" : "Open in file manager")));
   }
 
   renderTabMenu() {

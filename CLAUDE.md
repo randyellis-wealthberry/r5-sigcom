@@ -10,7 +10,7 @@ R5-SIGCOM is a layout + theme + mods package for the [Herdr](https://github.com/
 
 ```sh
 # Install / deploy into Herdr (copy is the "build")
-cp -R layouts themes mods ~/.config/herdr-app/
+sh install.sh   # or: cp -R layouts themes mods ~/.config/herdr-app/
 ~/.local/bin/herdr-app do layout.switch --name r5-sigcom
 
 # Validate mods (the only automated check)

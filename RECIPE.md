@@ -147,7 +147,7 @@ Left to right, top to bottom:
 - **Limits:**
   - The mesh fits about 6 agents around the hub. Asset meters show the first 8.
   - The treasury needs a feed wider than 1150px, and the intercept one wider than 640px.
-- **Reveal in Finder** is macOS only.
+- **Reveal in Finder** on macOS; on Linux the same menu item is "Open in file manager" (`xdg-open`).
 - **Fictional:** all codes, stations and money are fictional. Use no real agency seals or names.
 
 ## Done when
